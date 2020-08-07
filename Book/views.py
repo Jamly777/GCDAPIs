@@ -15,48 +15,78 @@ class Test(APIView):
         }
         return Response(res)
 
+class series(APIView):
+    def get(self,request):
+        allseries=[]
+        list=[]
+        queries=models.Book.objects.all()
+        for query in queries:
+            allseries.append(query.series)
+        series=set(allseries)
+        for s in series:
+            list.append({'name':s,'image':'a'})
+        print(type(series))
+        res={
+            'success':True,
+            'series':list
+            }
+        return Response(res)
 
 class bookname(APIView):
     def get(self,request):
-        name_dict={}
-        book=request.GET['bookname']
+        name_list=[]
+        book=request.GET['series']
         if book == '鬼吹灯':
-            names=models.Book.objects.all()
+            names=models.Book.objects.filter(series=book)
             for name in names:
-                name_dict[name.id]=name.book_name
+                name_list.append({'id':name.id,'bookname':name.book_name})
             res={
                 'success': True,
-                'bookname': name_dict
+                'books': name_list
             }
         else:
             res={
-                'fail':True
+                'fail':True,
+                'info': '资源更新中'
             }
         return Response(res)
 
 class brief(APIView):
     def get(self,request):
         allid=[]
+        allseries=[]
+        series=request.GET['series']
         id=request.GET['bookid']
         queries=models.Book.objects.all()
         for query in queries:
+            allseries.append(query.series)
             allid.append(query.id)
-        if int(id) in allid:
-            info=models.Book.objects.get(id=id)
-            res={
-                'success':True,
-                'data':info.book_brief
-            }
+        if series in allseries:
+            if int(id) in allid:
+                info=models.Book.objects.get(id=id)
+                res={
+                    'success':True,
+                    'data':{
+                        'bookname':info.book_name,
+                        'brief':info.book_brief
+                    }
+                }
+            else:
+                res={
+                    'fail':True,
+                    'info':'暂无此资源'
+                }
         else:
-            res={
-                'fail':True
+            res = {
+                'fail': True,
+                'info': '暂无此资源'
             }
         return Response(res)
 
 class chapternames(APIView):
     def get(self,request):
         allid = []
-        chapter_dict={}
+        chapter_list=[]
         id=request.GET['bookid']
         queries = models.Book.objects.all()
         for query in queries:
@@ -66,16 +96,17 @@ class chapternames(APIView):
             chapter_infos=models.Chapter.objects.filter(book_name=info.book_name)\
                 .order_by('chapter_id')
             for chapter_info in chapter_infos:
-                chapter_dict[chapter_info.chapter_id]=chapter_info.chapter_name
+                chapter_list.append({'chapter_id':chapter_info.chapter_id,'chapternames':chapter_info.chapter_name})
             res={
                 'success':True,
                 'bookname':{
-                    info.book_name:chapter_dict
+                    info.book_name:chapter_list
                 }
             }
         else:
             res={
                 'fail':True,
+                'info': '暂无此资源'
             }
         return Response(res)
 
@@ -93,24 +124,27 @@ class Article(APIView):
             for chapter in models.Chapter.objects.filter(book_name=bookname):
                 allchapterid.append(chapter.chapter_id)
             if int(chapter_id) in allchapterid:
-                chapter_path=models.Chapter.objects.get(book_name=bookname,
-                                                        chapter_id=chapter_id).chapter_path
-                with open(chapter_path,'r',encoding='utf-8') as f:
+                chapter_info=models.Chapter.objects.get(book_name=bookname,
+                                                        chapter_id=chapter_id)
+                with open(chapter_info.chapter_path,'r',encoding='utf-8') as f:
                     article_info=f.readlines()
                 res={
                     'success':True,
                     'data':{
                         'bookname':bookname,
+                        'chapter' :chapter_info.chapter_name,
                         'article' :''.join(article_info)
                     }
                 }
             else:
                 res={
-                    'fail':True
+                    'fail':True,
+                    'info': '暂无此资源'
                 }
         else:
             res={
-                'fail': True
+                'fail': True,
+                'info': '暂无此资源'
             }
 
         return Response(res)

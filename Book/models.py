@@ -13,3 +13,9 @@ class Chapter(models.Model):
     chapter_path=models.CharField(max_length=200)
     chapter_id=models.IntegerField()
     series = models.CharField(max_length=200, null=True)
+
+class Image(models.Model):
+    id=models.AutoField(primary_key=True)
+    series=models.CharField(max_length=200)
+    book_id=models.IntegerField(null=True)
+    url=models.CharField(max_length=200)

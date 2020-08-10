@@ -2,8 +2,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from . import models
-import urllib.parse
-import json
+import os
 # Create your views here.
 
 class Test(APIView):
@@ -17,19 +16,14 @@ class Test(APIView):
 
 class series(APIView):
     def get(self,request):
-        allseries=[]
         list=[]
-        queries=models.Book.objects.all()
+        queries=models.Image.objects.filter(book_id=0)
         for query in queries:
-            allseries.append(query.series)
-        series=set(allseries)
-        for s in series:
-            list.append({'name':s,'image':'a'})
-        print(type(series))
+            list.append({'name':query.series,'image':query.url})
         res={
             'success':True,
             'series':list
-            }
+        }
         return Response(res)
 
 class bookname(APIView):
@@ -39,7 +33,8 @@ class bookname(APIView):
         if book == '鬼吹灯':
             names=models.Book.objects.filter(series=book)
             for name in names:
-                name_list.append({'id':name.id,'bookname':name.book_name})
+                image=models.Image.objects.get(book_id=name.id).url
+                name_list.append({'id':name.id,'bookname':name.book_name,'image':image})
             res={
                 'success': True,
                 'books': name_list
